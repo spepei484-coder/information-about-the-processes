@@ -1,7 +1,7 @@
 ﻿#include <windows.h>
-#include <TlHelp32.h>
-#include <psapi.h>
+#include <tlhelp32.h>
 #include <iostream>
+#include <iomanip>
 
 class SmartHandle {
 public:
@@ -29,24 +29,41 @@ private:
 
 int main() {
     SmartHandle pSnap(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
-    if (!pSnap) return 1;
+    if (!pSnap) {
+        std::wcerr << L"CreateToolhelp32Snapshot failed, error code: " << GetLastError() << std::endl;
+        return 1;
+    }
 
     PROCESSENTRY32 pe{ sizeof(PROCESSENTRY32) };
-    if (!Process32First(pSnap, &pe)) return 2;
+    if (!Process32First(pSnap, &pe)) {
+        std::wcerr << L"Process32First failed, error code: " << GetLastError() << std::endl;
+        return 2;
+    }
     do {
-        std::wcout << L"PID: " << pe.th32ProcessID << L" NAME: " << pe.szExeFile << std::endl;
-        SmartHandle mSnap(CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pe.th32ProcessID));
-        if (!mSnap) continue;
-
-        MODULEENTRY32 me{ sizeof(MODULEENTRY32) };
-        if (!Module32First(mSnap, &me)) continue;
-        do {
-            std::wcout << L" MODULE" << me.szModule << L" BASE ADDRESS" << std::hex << me.modBaseAddr << L" SIZE: " << std::dec << me.modBaseSize << std::endl;
-        } while (Module32Next(mSnap, &me));
-
+        std::wcout << std::setw(8) << std::right << pe.th32ProcessID << " - " << pe.szExeFile << std::endl;
     } while (Process32Next(pSnap, &pe));
 
+    DWORD pid;
+    std::wcout << L" Write the process ID: ";
+    std::wcin >> pid;
+    std::wcout << std::endl;
 
+    SmartHandle mSnap(CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid));
+    if (!mSnap) {
+        std::wcerr << L"CreateToolhelp32Snapshot failed, error code: " << GetLastError() << std::endl;
+        return 3;
+    }
+
+    MODULEENTRY32 me{ sizeof(MODULEENTRY32) };
+    if (!Module32First(mSnap, &me)) {
+        std::wcerr << L"Process32First failed, error code: " << GetLastError() << std::endl;
+        return 4;
+    }
+    do {
+        std::wcout << L" MODULE: " << me.szModule << std::endl
+            << L" BASE ADDRESS: " << std::hex << me.modBaseAddr << std::endl
+            << L" SIZE: " << std::dec << me.modBaseSize << std::endl;
+    } while (Module32Next(mSnap, &me));
 
     return 0;
 }
