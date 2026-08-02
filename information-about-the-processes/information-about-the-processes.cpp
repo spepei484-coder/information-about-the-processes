@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <psapi.h>
 #include <string>
+#include <tchar.h>
 
 #pragma comment(lib, "psapi.lib")
 
@@ -57,7 +58,7 @@ bool ScaningProcess() {
 }
 //ПОИСК ВСЕХ МОДУЛЕЙ ПРОЦЕССА
 bool ScaningModule(DWORD pid) {
-    SmartHandle mSnap(CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid));
+    SmartHandle mSnap(CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid));
     if (!mSnap) {
         std::wcerr << L"CreateToolhelp32Snapshot failed, error code: " << GetLastError() << std::endl;
         return false;
@@ -69,9 +70,9 @@ bool ScaningModule(DWORD pid) {
         return false;
     }
     do {
-        tcout << L" MODULE: " << me.szModule << std::endl
-            << L"   BASE ADDRESS: " << std::hex << me.modBaseAddr << std::endl
-            << L"   SIZE: " << std::dec << me.modBaseSize << std::endl;
+        tcout << L" MODULE: " << me.szModule << std::endl;
+        // << L"   BASE ADDRESS: " << std::hex << me.modBaseAddr << std::endl
+        // << L"   SIZE: " << std::dec << me.modBaseSize << std::endl;
     } while (Module32Next(mSnap, &me));
     return true;
 }
@@ -121,7 +122,7 @@ bool EnumerateMemoryRegions(DWORD pid) {
     }
     return true;
 }
-//ПОИСК ПУТИ ПРОЦЕССА 
+//ПОИСК ПУТИ К ПРОЦЕССА 
 std::string GetExePathByPid(DWORD pid) {
     std::string result;
 
@@ -140,18 +141,45 @@ std::string GetExePathByPid(DWORD pid) {
     }
     return result;
 }
+//ПОИСК PID ПО НАЗВАНИЮ
+bool namebySearch(const std::wstring& targetName) {
+    SmartHandle pSnap(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
+    if (!pSnap) {
+        std::wcerr << L"CreateToolhelp32Snapshot failed, error code: " << GetLastError() << std::endl;
+        return false;
+    }
+
+    PROCESSENTRY32 pe{ sizeof(PROCESSENTRY32) };
+    if (!Process32First(pSnap, &pe)) {
+        std::wcerr << L"Process32First failed, error code: " << GetLastError() << std::endl;
+        return false;
+    }
+    bool found = false;
+    do {
+        if (_tcscmp(pe.szExeFile, targetName.c_str()) == 0) {
+            std::wcout << L"PID " << pe.szExeFile << L": " << pe.th32ProcessID << std::endl;
+            found = true;
+        }
+    } while (Process32Next(pSnap, &pe));
+    if (!found) std::wcout << L"Process \"" << targetName << L"\" not found." << std::endl;
+    return found;
+}
 
 int main() {
+    std::setlocale(LC_ALL, "");
+
     while (true) {
         std::wcout << L"Choose a number: \n"
             << L"1 - All processes\n"
             << L"2 - All modules according to pdi\n"
             << L"3 - Information about the regions\n"
             << L"4 - Path to the executable file\n"
+            << L"5 - Name search\n"
             << L"0 - Exit\n";
 
         int num;
         std::cin >> num;
+        std::wcin.ignore((std::numeric_limits<std::streamsize>::max)(), L'\n');
         std::wcout << std::endl;
 
         DWORD pid = 0;
@@ -207,12 +235,22 @@ int main() {
             }
             break;
         }
+        case 5: {
+            std::wcout << L"Write name process: ";
+            std::wstring processName;
+            std::getline(std::wcin, processName);
+            std::wcout << std::endl;
+
+            namebySearch(processName);
+            break;
+        }
+
         default: {
             std::wcerr << "Invalid choice." << std::endl;
             break;
         }
         }
+
     }
     return 0;
-     
 }
