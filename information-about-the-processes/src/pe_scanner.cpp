@@ -1,6 +1,7 @@
 #include "../include/pe_scanner.h"
 #include "../include/utils.h"
 #include <vector>
+#include <iomanip>
 
 bool ScaningPEHeader(const std::string& path) {
     SmartHandle hFile(CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
@@ -95,13 +96,18 @@ bool ScaningPEHeader(const std::string& path) {
         }
         char name[9] = { 0 };
         memcpy(name, sectionHeader.Name, 8);
-        std::cout << "Section " << i << ": " << name
-            << ", VirtualSize: 0x" << std::hex << sectionHeader.Misc.VirtualSize
-            << ", VirtualAddress: 0x" << sectionHeader.VirtualAddress
-            << ", SizeOfRawData: 0x" << sectionHeader.SizeOfRawData
-            << ", PointerToRawData: 0x" << sectionHeader.PointerToRawData
-            << ", Characteristics: " << std::hex << sectionHeader.Characteristics
-            << std::dec << std::endl;
+        std::cout << std::left << std::setw(25) << std::setw(3) << std::setfill(' ') << "Section " << i << ": " << name;
+        std::cout << std::left << std::setw(16) << ", VirtualSize:"
+            << std::hex << std::showbase << std::right << std::setw(10) << sectionHeader.Misc.VirtualSize;
+        std::cout << std::left << std::setw(18) << ", VirtualAddress:"
+            << std::right << std::setw(10) << sectionHeader.VirtualAddress;
+        std::cout << std::left << std::setw(18) << ", SizeOfRawData:"
+            << std::right << std::setw(10) << sectionHeader.SizeOfRawData;
+        std::cout << std::left << std::setw(20) << ", PointerToRawData:"
+            << std::right << std::setw(10) << sectionHeader.PointerToRawData;
+        std::cout << std::left << std::setw(20) << ", Characteristics:"
+            << std::right << std::setw(10) << sectionHeader.Characteristics;
+        std::cout << std::dec << std::noshowbase << std::endl;
     }
     std::cout << "PE header parsing completed successfully." << std::endl;
     return true;

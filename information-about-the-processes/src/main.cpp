@@ -84,23 +84,54 @@ int main() {
             break;
         }
         case 6: {
-            std::wcout << L"Write the process ID: ";
-            std::wcin >> pid;
-            std::wcout << std::endl;
-            if (pid == 0) {
-                std::wcerr << L"Process ID not set.\n";
+            std::cout << "Choose a number:\n"
+                << "1 - Search by PID\n"
+                << "2 - Search by path\n"
+                << "0 - Exit\n";
+            int num1;
+            std::cin >> num1;
+            std::wcin.ignore((std::numeric_limits<std::streamsize>::max)(), L'\n');
+            std::cout << std::endl;
+
+            switch (num1) {
+            case 0: return 0;
+            case 1: {
+                DWORD pid;
+                std::cout << "Write the process ID: ";
+                std::cin >> pid;
+                std::wcin.ignore((std::numeric_limits<std::streamsize>::max)(), L'\n');
+                std::cout << std::endl;
+
+                if (pid == 0) {
+                    std::cerr << "Process ID not set.\n";
+                    break;
+                }
+                std::string path = GetExePathByPid(pid);
+                if (path.empty()) {
+                    std::cerr << "Could not retrieve executable path.\n";
+                    break;
+                }
+                ScaningPEHeader(path);
                 break;
             }
-            std::string path = GetExePathByPid(pid);
-            if (path.empty()) {
-                std::wcerr << L"Could not retrieve executable path.\n";
+            case 2: {
+                std::string path;
+                std::cout << "Write path: ";
+                std::getline(std::cin, path);
+                std::cout << std::endl;
+
+                if (path.empty()) {
+                    std::cerr << "Path is empty.\n";
+                    break;
+                }
+                ScaningPEHeader(path);
                 break;
             }
-            ScaningPEHeader(path);
-            break;
-        }
-        default: {
-            std::wcerr << "Invalid choice." << std::endl;
+
+            default:
+                std::cerr << "Invalid choice.\n";
+                break;
+            }
             break;
         }
         }
