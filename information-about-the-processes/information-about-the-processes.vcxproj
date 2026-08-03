@@ -139,7 +139,18 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="information-about-the-processes.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\memory.cpp" />
+    <ClCompile Include="src\module.cpp" />
+    <ClCompile Include="src\pe_scanner.cpp" />
+    <ClCompile Include="src\process.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\memory.h" />
+    <ClInclude Include="include\module.h" />
+    <ClInclude Include="include\pe_scanner.h" />
+    <ClInclude Include="include\process.h" />
+    <ClInclude Include="include\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
