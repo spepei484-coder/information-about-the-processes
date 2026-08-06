@@ -11,24 +11,33 @@
 
 class SmartHandle {
 public:
-    SmartHandle(HANDLE handle) : _handle(handle) {}
-    ~SmartHandle() { if (_handle) CloseHandle(_handle); }
-    operator bool() { return _handle != NULL; }
-    operator HANDLE() { return _handle; }
-    HANDLE handle() { return _handle; }
+    SmartHandle(HANDLE handle = NULL) : _handle(handle) {}
+    ~SmartHandle() { if (_handle != NULL && _handle != INVALID_HANDLE_VALUE) CloseHandle(_handle); }
+
+    explicit operator bool() const { return _handle != NULL && _handle != INVALID_HANDLE_VALUE; }
+    operator HANDLE() const { return _handle; }
+    HANDLE get() const { return _handle; }
+
     SmartHandle(const SmartHandle&) = delete;
-    SmartHandle& operator = (const SmartHandle&) = delete;
+    SmartHandle& operator=(const SmartHandle&) = delete;
+
     SmartHandle(SmartHandle&& other) noexcept : _handle(other._handle) {
         other._handle = NULL;
     }
-    SmartHandle& operator = (SmartHandle&& other) noexcept {
+    SmartHandle& operator=(SmartHandle&& other) noexcept {
         if (this != &other) {
-            CloseHandle(_handle);
+            if (_handle && _handle != INVALID_HANDLE_VALUE) CloseHandle(_handle);
             _handle = other._handle;
             other._handle = NULL;
         }
         return *this;
     }
+
+    void reset(HANDLE handle = NULL) {
+        if (_handle && _handle != INVALID_HANDLE_VALUE) CloseHandle(_handle);
+        _handle = handle;
+    }
+
 private:
-    HANDLE _handle = NULL;
+    HANDLE _handle;
 };
